@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any, List
 from .Properties import Type, Property, LinkProperty, MultiLinkProperty
-from .Functions import GetAll, GetByProperty, Insert, Update, Delete
+from .Functions import GetAll, GetByProperty, Insert, Update, Delete, DeleteAll
 from typing import TypeVar
 
 EdgeDBSet = TypeVar('EdgeDBSet')
@@ -42,7 +42,7 @@ class EdgeDBModel:
     ###################################################
     '''
     def insertEntry(self,printStr = False,**valuesToInsert) -> None:
-        Insert(printStr=printStr, 
+        return Insert(printStr=printStr, 
                propsList=self._props,
                modelName=self.modelName,
                client=self.client,
@@ -50,16 +50,15 @@ class EdgeDBModel:
                ).execute()
         
     def getAll(self,printStr = False) -> EdgeDBSet:
-        data = GetAll(printStr=printStr, 
+        return GetAll(printStr=printStr, 
                propsList=self._props,
                modelName=self.modelName,
                client=self.client,
                ).execute()
-        return data
             
 
     def getByProperty(self,printStr, propName:str, propType: Type, **valueToFilterBy ) -> EdgeDBSet:
-        data = GetByProperty(
+        return GetByProperty(
                       client = self.client, 
                       propsList=self._props,
                       modelName = self.modelName,
@@ -68,7 +67,7 @@ class EdgeDBModel:
                       printStr=printStr, 
                       valueToFilterBy=valueToFilterBy
     ).execute()
-        return data
+
     
 
     
@@ -82,7 +81,7 @@ class EdgeDBModel:
         entry = fakeModel.get(...)
         fakeModel.update(entry.id, printStr=True, name="blade runner")
         """
-        Update(printStr=printStr, 
+        return Update(printStr=printStr, 
                propsList=self._props,
                modelName=self.modelName,
                client=self.client,
@@ -94,18 +93,20 @@ class EdgeDBModel:
         """
         Finds an entry by its uuid then deletes it
         """
-        Delete(printStr=printStr, 
+        return Delete(printStr=printStr, 
                propsList=self._props,
                modelName=self.modelName,
                client=self.client,
                uuid = uuid,
                ).execute()
     
-    def delAll(self,) -> None:
+    def delAll(self,printStr = False) -> None:
         """
         Deletes all entries in this model
-        
         """
-        ...
+        return DeleteAll(printStr = printStr,
+                  client= self.client,
+                  modelName=self.modelName
+        ).execute()
     
 

@@ -71,9 +71,13 @@ class Insert(BaseCRUDFunction):
             insertStrings += f"\t{prop.propertyName} := <{prop.type.name}>$_{prop.propertyName},\n"
         
         body = f"""
-INSERT {self.modelName} {self.lb}
-{insertStrings}
-{self.rb}
+select (
+    INSERT {self.modelName} {self.lb}
+    {insertStrings}
+    {self.rb}
+) {{
+  id
+}};
 """
         return body
     
@@ -188,5 +192,23 @@ filter .id = <uuid>$_id;
             pass
         else:
             entry = self.client.query(self.buildBody(), _id=self.uuid)
+            self.client.close()
+            return entry
+
+@dataclass
+class DeleteAll(BaseCRUDFunction):
+    modelName:str = ''
+    
+    def buildBody(self) -> str:
+        body = f"""
+delete {self.modelName};
+"""
+        return body
+    
+    def execute(self):
+        if self.printStr:
+            pass
+        else:
+            entry = self.client.query(self.buildBody())
             self.client.close()
             return entry
