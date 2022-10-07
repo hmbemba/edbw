@@ -1,11 +1,11 @@
-'''
+"""
 		- BaseCRUDFunction
 		- GetAll
 		- GetByProperty
 		- InsertEntry
 		- DeleteEntry
 		- UpdateEntry
-'''
+"""
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, List
@@ -13,12 +13,13 @@ import abc
 from .Properties import Type
 from typing import TypeVar
 
-EdgeDBUUID = TypeVar('EdgeDBUUID')
+EdgeDBUUID = TypeVar("EdgeDBUUID")
+
 
 @dataclass
 class BaseCRUDFunction(abc.ABC):
-    '''
-    Allows Model functions to implement 
+    """
+    Allows Model functions to implement
     returnStr or printStr functionality
 
     example ---
@@ -29,19 +30,20 @@ class BaseCRUDFunction(abc.ABC):
     to be examined
 
     ------------------------------------------------
-    
+
     printStr: bool = False
-    
+
     client:Any = None
-    
+
     lb = "{"
-    
+
     rb = "}"
-    
+
     propsList: List = field(default_factory=lambda: [])
-    '''
+    """
+
     printStr: bool = False
-    client:Any = None
+    client: Any = None
     lb = "{"
     rb = "}"
     propsList: List = field(default_factory=lambda: [])
@@ -54,22 +56,24 @@ class BaseCRUDFunction(abc.ABC):
     @abc.abstractmethod
     def buildBody(self) -> str:
         pass
-    
+
     @abc.abstractmethod
     def execute(self):
         pass
 
+
 @dataclass
 class Insert(BaseCRUDFunction):
-    modelName:str = ''
+    modelName: str = ""
     valuesToInsert: dict = None
-    
-    
+
     def buildBody(self) -> str:
-        insertStrings=''
+        insertStrings = ""
         for prop in self.propsList:
-            insertStrings += f"\t{prop.propertyName} := <{prop.type.name}>$_{prop.propertyName},\n"
-        
+            insertStrings += (
+                f"\t{prop.propertyName} := <{prop.type.name}>$_{prop.propertyName},\n"
+            )
+
         body = f"""
 select (
     INSERT {self.modelName} {self.lb}
@@ -80,7 +84,7 @@ select (
 }};
 """
         return body
-    
+
     def execute(self):
         if self.printStr:
             pass
@@ -89,15 +93,16 @@ select (
             self.client.close()
             return entry
 
+
 @dataclass
 class GetAll(BaseCRUDFunction):
-    modelName:str = ''
+    modelName: str = ""
 
     def buildBody(self) -> str:
-        insertStrings=''
+        insertStrings = ""
         for prop in self.propsList:
             insertStrings += prop.propertyName + ",\n"
-        
+
         body = f"""
         select {self.modelName} {self.lb}
         id,
@@ -105,7 +110,7 @@ class GetAll(BaseCRUDFunction):
         {self.rb}
         """
         return body
-    
+
     def execute(self):
         if self.printStr:
             pass
@@ -114,19 +119,21 @@ class GetAll(BaseCRUDFunction):
             self.client.close()
             return entry
 
+
 @dataclass
 class GetByProperty(BaseCRUDFunction):
-    '''
+    """
     miners.getByProperty(propName='total_mined', propType=Type.float32,_total_mined=10.0)
 
-    '''
-    propName:str = ''
+    """
+
+    propName: str = ""
     propType: Type = None
-    modelName:str = ''
+    modelName: str = ""
     valueToFilterBy: dict = None
-    
+
     def buildBody(self) -> str:
-        insertStrings = ''
+        insertStrings = ""
         for prop in self.propsList:
             insertStrings += prop.propertyName + ",\n"
 
@@ -138,26 +145,30 @@ id,
 filter .{self.propName} = <{self.propType.name}>$_{self.propName}
 """
         return body
-    
+
     def execute(self):
         if self.printStr:
             pass
         else:
-            #print('executing from getby property')
+            # print('executing from getby property')
             entry = self.client.query(self.buildBody(), **self.valueToFilterBy)
             self.client.close()
             return entry
 
+
 @dataclass
 class Update(BaseCRUDFunction):
-    modelName:str = ''
-    uuid: EdgeDBUUID = ''
+    modelName: str = ""
+    uuid: EdgeDBUUID = ""
     argsToUpdate: dict = None
-    
+
     def buildBody(self) -> str:
-        insertStrings=''
+        insertStrings = ""
         for key, val in self.argsToUpdate.items():
-            insertStrings += f'\t{key} := "{val}",\n'
+            if isinstance(val, bool):
+                insertStrings += f"\t{key} := {val},\n"
+            else:
+                insertStrings += f'\t{key} := "{val}",\n'
         body = f"""
 UPDATE {self.modelName} 
 filter .id = <uuid>$_id
@@ -166,7 +177,7 @@ set {self.lb}
 {self.rb};
         """
         return body
- 
+
     def execute(self):
         if self.printStr:
             pass
@@ -175,18 +186,19 @@ set {self.lb}
             self.client.close()
             return entry
 
+
 @dataclass
 class Delete(BaseCRUDFunction):
-    modelName:str = ''
-    uuid: EdgeDBUUID = ''
-    
+    modelName: str = ""
+    uuid: EdgeDBUUID = ""
+
     def buildBody(self) -> str:
         body = f"""
 delete {self.modelName} 
 filter .id = <uuid>$_id;
 """
         return body
-    
+
     def execute(self):
         if self.printStr:
             pass
@@ -195,16 +207,17 @@ filter .id = <uuid>$_id;
             self.client.close()
             return entry
 
+
 @dataclass
 class DeleteAll(BaseCRUDFunction):
-    modelName:str = ''
-    
+    modelName: str = ""
+
     def buildBody(self) -> str:
         body = f"""
 delete {self.modelName};
 """
         return body
-    
+
     def execute(self):
         if self.printStr:
             pass
