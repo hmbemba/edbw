@@ -58,8 +58,8 @@ class Property:
             \t{'required ' if self.required else ''}property {self.propertyName} -> {self.type.name}{self.lb}
             {constraintString}
             {self.rb};\n"""
-        else:
-            return f"\t{'required ' if self.required else ''}property {self.propertyName} -> {self.type.name};\n"
+
+        return f"\t{'required ' if self.required else ''}property {self.propertyName} -> {self.type.name};\n"
 
     def insertStr(self):
         return f"\t{self.propertyName} := <{self.type.name}>$_{self.propertyName},\n"
